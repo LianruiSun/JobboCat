@@ -16,10 +16,10 @@ export default function WelcomePage() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-hidden">
       <Header />
       
-      <div className="flex items-center justify-center px-6 relative overflow-hidden pt-24">
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6 relative">
       {/* Decorative Background Elements */}
       <div className="absolute top-1/4 left-10 h-96 w-96 rounded-full bg-emerald-200/20 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-10 h-96 w-96 rounded-full bg-teal-200/20 blur-3xl pointer-events-none" />
