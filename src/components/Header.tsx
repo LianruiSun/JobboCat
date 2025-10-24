@@ -1,9 +1,12 @@
 import { useNavigation } from '../context/NavigationContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
   const { navigateTo } = useNavigation();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
 
   const handleHomeClick = () => {
     navigateTo('welcome');
@@ -43,14 +46,16 @@ export default function Header() {
             onClick={() => navigateTo('about')}
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            About
+            {t('header.about')}
           </button>
           <button
             onClick={() => navigateTo('features')}
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            Features
+            {t('header.features')}
           </button>
+          
+          <LanguageSelector />
           
           {user ? (
             <>
@@ -69,13 +74,14 @@ export default function Header() {
               onClick={() => navigateTo('login')}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:shadow-lg transition-all hover:scale-105"
             >
-              Sign In
+              {t('header.login')}
             </button>
           )}
         </nav>
 
         {/* Mobile menu - includes auth buttons */}
         <div className="flex items-center gap-2 md:hidden">
+          <LanguageSelector />
           {user ? (
             <button
               onClick={signOut}
@@ -88,7 +94,7 @@ export default function Header() {
               onClick={() => navigateTo('login')}
               className="px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:shadow-lg transition-all"
             >
-              Sign In
+              {t('header.login')}
             </button>
           )}
           <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
