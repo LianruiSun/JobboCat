@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import FeaturesPage from './pages/FeaturesPage';
 import IntroAnimation from './components/IntroAnimation';
 import { NavigationProvider } from './context/NavigationContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Simple routing - you can replace this with React Router later
 type PageType = 'welcome' | 'login' | 'lobby' | 'main' | 'about' | 'features';
@@ -54,10 +55,11 @@ function App() {
   };
 
   return (
-    <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
-      <div className="app">
-        {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
-        {renderPage()}
+    <AuthProvider>
+      <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
+        <div className="app">
+          {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
+          {renderPage()}
       
       {/* Navigation buttons for development/testing */}
       <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
@@ -134,6 +136,7 @@ function App() {
       </div>
       </div>
     </NavigationProvider>
+    </AuthProvider>
   );
 }
 

@@ -1,14 +1,76 @@
 import { useState } from 'react';
 import Header from '../components/Header';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const { signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
+  const { navigateTo } = useNavigation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      if (showForgotPassword) {
+        // Handle password reset
+        await resetPassword(email);
+        setSuccess('Password reset email sent! Check your inbox.');
+        setEmail('');
+      } else if (isSignUp) {
+        // Handle sign up
+        await signUp(email, password, { full_name: fullName });
+        setSuccess('Account created! Please check your email to confirm.');
+      } else {
+        // Handle sign in
+        await signIn(email, password);
+        setSuccess('Signed in successfully!');
+        // Navigate to welcome page after successful login
+        setTimeout(() => navigateTo('welcome'), 1000);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModeSwitch = () => {
+    setIsSignUp(!isSignUp);
+    setError('');
+    setSuccess('');
+    setShowForgotPassword(false);
+  };
+
+  const handleForgotPassword = () => {
+    setShowForgotPassword(!showForgotPassword);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // Sign out first to prevent linking OAuth to currently logged-in account
+      await signInWithOAuth('google', true);
+      // OAuth will redirect the user, so this won't execute
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
+      setLoading(false);
+    }
   };
 
   return (
@@ -19,15 +81,53 @@ export default function LoginPage() {
         <div className="mx-auto max-w-md">
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-4xl font-bold text-slate-900 mb-2">
-              Welcome Back
+              {showForgotPassword ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
             </h1>
             <p className="text-slate-600">
-              Sign in to continue to Jobbo Cat
+              {showForgotPassword
+                ? 'Enter your email to receive a reset link'
+                : isSignUp
+                ? 'Join the Jobbo Cat community'
+                : 'Sign in to continue to Jobbo Cat'}
             </p>
           </div>
 
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-fade-in">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-fade-in">
+              <p className="text-sm text-emerald-600">{success}</p>
+            </div>
+          )}
+
           <div className="card p-8 animate-slide-up">
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Full Name Field (Sign Up Only) */}
+              {isSignUp && !showForgotPassword && (
+                <div>
+                  <label
+                    htmlFor="fullName"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
+                    Full Name
+                  </label>
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="input"
+                    placeholder="John Doe"
+                  />
+                </div>
+              )}
+
+              {/* Email Field */}
               <div>
                 <label
                   htmlFor="email"
@@ -46,80 +146,105 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2">
+              {!showForgotPassword && (
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
+                    Password
+                  </label>
                   <input
-                    type="checkbox"
-                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input"
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
                   />
-                  <span className="text-sm text-slate-600">Remember me</span>
-                </label>
-                <a
-                  href="#forgot"
-                  className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-                >
-                  Forgot password?
-                </a>
-              </div>
+                </div>
+              )}
 
-              <Button type="submit" variant="primary" size="lg" fullWidth>
-                Sign In
+              {!showForgotPassword && !isSignUp && (
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span className="text-sm text-slate-600">Remember me</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                variant="primary" 
+                size="lg" 
+                fullWidth
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : showForgotPassword ? 'Send Reset Email' : isSignUp ? 'Sign Up' : 'Sign In'}
               </Button>
+
+              {showForgotPassword && (
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-sm text-center w-full text-emerald-600 hover:text-emerald-700"
+                >
+                  Back to Sign In
+                </button>
+              )}
             </form>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-4 text-slate-500">
-                  Or continue with
-                </span>
-              </div>
-            </div>
+            {!showForgotPassword && (
+              <>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-4 text-slate-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="secondary" size="md">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
-                </svg>
-                Google
-              </Button>
-              <Button variant="secondary" size="md">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                </svg>
-                GitHub
-              </Button>
-            </div>
+                <Button 
+                  variant="secondary" 
+                  size="md"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                  </svg>
+                  Continue with Google
+                </Button>
 
-            <p className="mt-6 text-center text-sm text-slate-600">
-              Don't have an account?{' '}
-              <a
-                href="#signup"
-                className="font-medium text-emerald-600 hover:text-emerald-700"
-              >
-                Sign up for free
-              </a>
-            </p>
+                <p className="mt-6 text-center text-sm text-slate-600">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  <button
+                    type="button"
+                    onClick={handleModeSwitch}
+                    className="font-medium text-emerald-600 hover:text-emerald-700"
+                  >
+                    {isSignUp ? 'Sign in' : 'Sign up for free'}
+                  </button>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </main>

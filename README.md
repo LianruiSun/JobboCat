@@ -8,12 +8,13 @@ Jobbo Cat is a modern, beautiful web application designed to connect job seekers
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 ## ✨ Features
 
 - 🎨 **Beautiful UI** - Modern, responsive design with smooth animations
-- 🏠 **Welcome Page** - See how many people are actively looking for jobs in real-time
-- 🔐 **Authentication** - Secure login and signup functionality
+- 👥 **Live Visitor Count** - See how many people are actively looking for jobs in real-time
+- 🔐 **Secure Authentication** - Email/password and Google OAuth sign-in
 - 🚪 **Lobby System** - Browse and join topic-based chat rooms
 - 💬 **Real-time Chat** - Connect and communicate with others in your field
 - 📱 **Fully Responsive** - Works seamlessly on desktop, tablet, and mobile
@@ -24,7 +25,8 @@ Jobbo Cat is a modern, beautiful web application designed to connect job seekers
 
 ### Prerequisites
 
-- Node.js 16+ and npm/yarn/pnpm
+- Node.js 16+ and npm
+- Netlify CLI (for serverless functions)
 
 ### Installation
 
@@ -39,14 +41,33 @@ cd jobbo-cat
 npm install
 ```
 
-3. Start the development server
+3. Set up environment variables
 ```bash
-npm run dev
+# Copy .env.example to .env
+cp .env.example .env
+
+# Edit .env and add your credentials:
+# - VITE_SUPABASE_URL
+# - VITE_SUPABASE_ANON_KEY
+# - UPSTASH_REDIS_REST_URL
+# - UPSTASH_REDIS_REST_TOKEN
 ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your browser
+4. Start the development server
+```bash
+netlify dev
+```
 
-## 📦 Build for Production
+5. Open [http://localhost:8888](http://localhost:8888) in your browser
+
+## � Documentation
+
+Detailed setup guides are available in the `docs/` folder:
+
+- **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Complete setup for email/password and Google OAuth
+- **[Live Visitors Setup](docs/LIVE_VISITORS_SETUP.md)** - Configure real-time visitor counting with Upstash Redis
+
+## �📦 Build for Production
 
 ```bash
 npm run build
@@ -54,63 +75,89 @@ npm run build
 
 The built files will be in the `dist` directory.
 
-## 🧪 Preview Production Build
-
-```bash
-npm run preview
-```
-
 ## 🛠️ Tech Stack
 
-- **Frontend Framework:** React 19
+### Frontend
+- **Framework:** React 19
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **Build Tool:** Vite
 - **Routing:** React Router DOM
-- **Linting:** ESLint
-- **Package Manager:** npm
+
+### Backend & Services
+- **Authentication:** Supabase Auth
+- **Database:** Supabase (PostgreSQL)
+- **Serverless Functions:** Netlify Functions
+- **Live Visitor Count:** Upstash Redis
+- **Deployment:** Netlify
 
 ## 📁 Project Structure
 
 ```
 jobbo-cat/
-├── public/             # Static assets
+├── docs/                    # Documentation
+│   ├── AUTHENTICATION_GUIDE.md
+│   └── LIVE_VISITORS_SETUP.md
+├── netlify/
+│   └── functions/           # Serverless functions
+│       └── heartbeat.ts     # Live visitor tracking
+├── public/                  # Static assets
 ├── src/
-│   ├── assets/         # Images, fonts, etc.
-│   ├── components/     # Reusable components
+│   ├── assets/              # Images, fonts, etc.
+│   ├── components/          # Reusable components
 │   │   ├── AnimatedCat.tsx
 │   │   ├── Button.tsx
 │   │   ├── CatLogo.tsx
 │   │   ├── Header.tsx
 │   │   └── IntroAnimation.tsx
-│   ├── pages/          # Page components
+│   ├── context/             # React context providers
+│   │   ├── AuthContext.tsx
+│   │   └── NavigationContext.tsx
+│   ├── hooks/               # Custom React hooks
+│   │   └── useOnlineCount.ts
+│   ├── lib/                 # Utilities
+│   │   └── supabase.ts      # Supabase client
+│   ├── pages/               # Page components
 │   │   ├── WelcomePage.tsx
 │   │   ├── LoginPage.tsx
 │   │   ├── LobbyPage.tsx
+│   │   ├── AboutPage.tsx
+│   │   ├── FeaturesPage.tsx
 │   │   └── MainPage.tsx
-│   ├── App.tsx         # Main app component
-│   ├── main.tsx        # Entry point
-│   └── index.css       # Global styles
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── tailwind.config.js
+│   ├── App.tsx              # Main app component
+│   ├── main.tsx             # Entry point
+│   └── index.css            # Global styles
+├── .env.example             # Environment variables template
+├── netlify.toml             # Netlify configuration
+└── package.json
 ```
 
 ## 🎨 Pages Overview
 
 ### Welcome Page
-The landing page showcasing active job seekers and allowing users to select their field of interest.
+The landing page showcasing real-time count of active job seekers and allowing users to select their field of interest.
 
-### Login/Signup Pages
-Secure authentication with beautiful form design and validation.
+### Login Page
+Secure authentication with:
+- Email/password sign up and sign in
+- Google OAuth (one-click login)
+- Password reset functionality
 
 ### Lobby Page
 Browse available chat rooms by category, see member counts, and online users.
 
-### Main Page (Chat Room)
-Real-time chat interface for connecting with others in your chosen community.
+### Features & About Pages
+Information about the platform and its features.
+
+## 🔐 Authentication
+
+Jobbo Cat uses **Supabase Auth** with:
+- ✅ Email/password authentication
+- ✅ Google OAuth integration
+- ✅ Secure session management
+- ✅ Password reset functionality
+
+See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for setup instructions.
 
 ## 🤝 Contributing
 
@@ -122,19 +169,16 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## ⚠️ Security
+
+- Never commit `.env` file or sensitive credentials
+- Keep your Supabase keys secure
+- Rotate OAuth secrets regularly
+- Follow security best practices in production
+
 ## 📝 License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-## 👨‍💻 Author
-
-Your Name - [@yourhandle](https://github.com/yourusername)
-
-## 🙏 Acknowledgments
-
-- Inspired by the need to support job seekers during their journey
-- Built with modern web technologies for the best user experience
-- Special thanks to the open-source community
 
 ---
 
