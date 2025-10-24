@@ -3,10 +3,13 @@ import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import LobbyPage from './pages/LobbyPage';
 import MainPage from './pages/MainPage';
+import AboutPage from './pages/AboutPage';
+import FeaturesPage from './pages/FeaturesPage';
 import IntroAnimation from './components/IntroAnimation';
+import { NavigationProvider } from './context/NavigationContext';
 
 // Simple routing - you can replace this with React Router later
-type PageType = 'welcome' | 'login' | 'lobby' | 'main';
+type PageType = 'welcome' | 'login' | 'lobby' | 'main' | 'about' | 'features';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
@@ -41,15 +44,20 @@ function App() {
         return <LobbyPage />;
       case 'main':
         return <MainPage />;
+      case 'about':
+        return <AboutPage />;
+      case 'features':
+        return <FeaturesPage />;
       default:
         return <WelcomePage />;
     }
   };
 
   return (
-    <div className="app">
-      {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
-      {renderPage()}
+    <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
+      <div className="app">
+        {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
+        {renderPage()}
       
       {/* Navigation buttons for development/testing */}
       <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
@@ -103,8 +111,29 @@ function App() {
         >
           Main
         </button>
+        <button
+          onClick={() => navigateTo('about')}
+          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+            currentPage === 'about'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          About
+        </button>
+        <button
+          onClick={() => navigateTo('features')}
+          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+            currentPage === 'features'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          Features
+        </button>
       </div>
-    </div>
+      </div>
+    </NavigationProvider>
   );
 }
 
