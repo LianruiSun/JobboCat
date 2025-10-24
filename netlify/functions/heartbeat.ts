@@ -50,6 +50,18 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    // Check if environment variables are set
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.error("Missing Redis environment variables");
+      return {
+        statusCode: 500,
+        headers: cors,
+        body: JSON.stringify({ 
+          error: "Redis configuration missing. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Netlify environment variables." 
+        })
+      };
+    }
+
     // Parse request body
     const { sessionId } = JSON.parse(event.body || "{}");
     
@@ -82,7 +94,10 @@ export const handler: Handler = async (event) => {
     return { 
       statusCode: 500, 
       headers: cors, 
-      body: JSON.stringify({ error: e.message || "Internal server error" }) 
+      body: JSON.stringify({ 
+        error: e.message || "Internal server error",
+        details: process.env.NODE_ENV === 'development' ? e.stack : undefined
+      }) 
     };
   }
 };
