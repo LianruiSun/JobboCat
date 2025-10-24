@@ -14,7 +14,8 @@ Jobbo Cat is a modern, beautiful web application designed to connect job seekers
 
 - 🎨 **Beautiful UI** - Modern, responsive design with smooth animations
 - 👥 **Live Visitor Count** - See how many people are actively looking for jobs in real-time
-- 🔐 **Secure Authentication** - Email/password and Google OAuth sign-in
+- 🔐 **Secure Authentication** - Email/password and Google OAuth sign-in with bot protection
+- 🛡️ **Bot Protection** - Cloudflare Turnstile verification for login and signup
 - 🚪 **Lobby System** - Browse and join topic-based chat rooms
 - 💬 **Real-time Chat** - Connect and communicate with others in your field
 - 📱 **Fully Responsive** - Works seamlessly on desktop, tablet, and mobile
@@ -49,6 +50,7 @@ cp .env.example .env
 # Edit .env and add your credentials:
 # - VITE_SUPABASE_URL
 # - VITE_SUPABASE_ANON_KEY
+# - VITE_CLOUDFLARE_TURNSTILE_SITE_KEY
 # - UPSTASH_REDIS_REST_URL
 # - UPSTASH_REDIS_REST_TOKEN
 ```
@@ -60,11 +62,12 @@ netlify dev
 
 5. Open [http://localhost:8888](http://localhost:8888) in your browser
 
-## � Documentation
+## 📚 Documentation
 
 Detailed setup guides are available in the `docs/` folder:
 
 - **[Authentication Guide](docs/AUTHENTICATION_GUIDE.md)** - Complete setup for email/password and Google OAuth
+- **[Cloudflare Turnstile Setup](docs/CLOUDFLARE_TURNSTILE_SETUP.md)** - Configure bot protection for login and signup
 - **[Live Visitors Setup](docs/LIVE_VISITORS_SETUP.md)** - Configure real-time visitor counting with Upstash Redis
 
 ## �📦 Build for Production
@@ -87,6 +90,7 @@ The built files will be in the `dist` directory.
 ### Backend & Services
 - **Authentication:** Supabase Auth
 - **Database:** Supabase (PostgreSQL)
+- **Bot Protection:** Cloudflare Turnstile
 - **Serverless Functions:** Netlify Functions
 - **Live Visitor Count:** Upstash Redis
 - **Deployment:** Netlify
@@ -97,6 +101,7 @@ The built files will be in the `dist` directory.
 jobbo-cat/
 ├── docs/                    # Documentation
 │   ├── AUTHENTICATION_GUIDE.md
+│   ├── CLOUDFLARE_TURNSTILE_SETUP.md
 │   └── LIVE_VISITORS_SETUP.md
 ├── netlify/
 │   └── functions/           # Serverless functions
@@ -109,7 +114,8 @@ jobbo-cat/
 │   │   ├── Button.tsx
 │   │   ├── CatLogo.tsx
 │   │   ├── Header.tsx
-│   │   └── IntroAnimation.tsx
+│   │   ├── IntroAnimation.tsx
+│   │   └── Turnstile.tsx
 │   ├── context/             # React context providers
 │   │   ├── AuthContext.tsx
 │   │   └── NavigationContext.tsx
@@ -141,6 +147,7 @@ The landing page showcasing real-time count of active job seekers and allowing u
 Secure authentication with:
 - Email/password sign up and sign in
 - Google OAuth (one-click login)
+- Cloudflare Turnstile bot protection
 - Password reset functionality
 
 ### Lobby Page
@@ -154,10 +161,11 @@ Information about the platform and its features.
 Jobbo Cat uses **Supabase Auth** with:
 - ✅ Email/password authentication
 - ✅ Google OAuth integration
+- ✅ Cloudflare Turnstile bot protection
 - ✅ Secure session management
 - ✅ Password reset functionality
 
-See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) for setup instructions.
+See [Authentication Guide](docs/AUTHENTICATION_GUIDE.md) and [Cloudflare Turnstile Setup](docs/CLOUDFLARE_TURNSTILE_SETUP.md) for setup instructions.
 
 ## 🤝 Contributing
 

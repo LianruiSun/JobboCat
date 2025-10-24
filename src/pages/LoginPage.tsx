@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Header from '../components/Header';
 import Button from '../components/Button';
+import Turnstile from '../components/Turnstile';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const { signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const { navigateTo } = useNavigation();
@@ -21,6 +23,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
+    // Check for Turnstile verification (not required for password reset)
+    if (!showForgotPassword && !turnstileToken) {
+      setError('Please complete the verification challenge');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -52,15 +61,22 @@ export default function LoginPage() {
     setError('');
     setSuccess('');
     setShowForgotPassword(false);
+    setTurnstileToken(null);
   };
 
   const handleForgotPassword = () => {
     setShowForgotPassword(!showForgotPassword);
     setError('');
     setSuccess('');
+    setTurnstileToken(null);
   };
 
   const handleGoogleSignIn = async () => {
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge first');
+      return;
+    }
+    
     setError('');
     setLoading(true);
     try {
@@ -183,6 +199,20 @@ export default function LoginPage() {
                   >
                     Forgot password?
                   </button>
+                </div>
+              )}
+
+              {/* Cloudflare Turnstile - Only show for login/signup, not password reset */}
+              {!showForgotPassword && (
+                <div className="flex justify-center">
+                  <Turnstile
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onError={() => {
+                      setTurnstileToken(null);
+                      setError('Verification failed. Please try again.');
+                    }}
+                    onExpire={() => setTurnstileToken(null)}
+                  />
                 </div>
               )}
 
