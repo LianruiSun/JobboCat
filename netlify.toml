@@ -1,0 +1,7 @@
+[build]
+  command = "npm run build"   # Vite/CRA/Next 的构建命令；纯静态可不填
+  publish = "dist"            # 构建输出目录（Vite 默认 dist；CRA 为 build）
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"    # 自动打包依赖，更兼容

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import Header from '../components/Header';
 import Button from '../components/Button';
+import { useOnlineCount } from '../hooks/useOnlineCount';
 
 export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { onlineCount, loading } = useOnlineCount();
 
   const categories = [
     'Technology',
@@ -27,10 +29,43 @@ export default function WelcomePage() {
       {/* Main Content */}
       <div className="relative z-10 max-w-2xl mx-auto text-center animate-fade-in">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>1,247 people looking for jobs right now</span>
+          <span>
+            {loading ? (
+              'Loading...'
+            ) : onlineCount > 0 ? (
+              `${onlineCount.toLocaleString()} ${onlineCount === 1 ? 'person' : 'people'} looking for jobs right now`
+            ) : (
+              'Be the first to join!'
+            )}
+          </span>
         </div>
+
+        {/* User Number Badge */}
+        {!loading && onlineCount > 0 && (
+          <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg">
+            <span className="text-white font-bold">
+              You're #{onlineCount}
+            </span>
+          </div>
+        )}
+
+        {/* Special Message for First 10 Users */}
+        {!loading && onlineCount > 0 && onlineCount <= 10 && (
+          <div className="mb-6 mx-auto max-w-md px-6 py-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-xl shadow-lg animate-fade-in">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-2xl">🎉</span>
+              <span className="text-lg font-bold text-amber-700">
+                Early Adopter!
+              </span>
+              <span className="text-2xl">🎉</span>
+            </div>
+            <p className="text-amber-600 font-medium text-sm">
+              You're one of the first 10 members! Welcome to the community! 🚀
+            </p>
+          </div>
+        )}
 
         {/* Main Heading */}
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-6">
