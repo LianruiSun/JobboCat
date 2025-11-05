@@ -25,11 +25,11 @@ export default function WelcomePage() {
     setShowCharacterCreator(true);
   };
 
-  const handleCharacterComplete = (character: { category: string; outfit: string }) => {
+  const handleCharacterComplete = (character: { cat: string; hat: string; table: string; other: string }) => {
     console.log('Character created:', character);
     console.log('Selected field:', selectedCategory);
     // TODO: Navigate to lobby or save character data
-    alert(`Welcome! Your ${character.category} cat with ${character.outfit} outfit is ready!`);
+    alert(`Welcome! Your character is ready!\nCat: ${character.cat}\nTable: ${character.table}\nHat: ${character.hat || 'None'}\nAccessory: ${character.other || 'None'}`);
   };
 
   const handleBack = () => {
