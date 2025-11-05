@@ -11,6 +11,8 @@ const redis = IS_LOCAL ? null : new Redis({
 });
 
 const KEY = "presence:online";
+const USER_COUNTER_KEY = "users:counter"; // Counter for total registered users (production only)
+const USER_NUMBER_KEY = "users:numbers"; // Hash map: sessionId -> user number (production only)
 const WINDOW_SEC = 120; // Consider user online if active within last 120 seconds (2 minutes)
 
 // Local development mock storage
@@ -74,10 +76,15 @@ export const handler: Handler = async (event) => {
 
     const now = Math.floor(Date.now() / 1000);
     let count: number;
+    let userNumber: number;
 
     // LOCAL DEVELOPMENT MODE - Use in-memory storage
     if (IS_LOCAL) {
       console.log("🔧 Running in LOCAL mode - using mock storage (no Redis calls)");
+      
+      // In local dev, always generate a random number for testing
+      // This allows developers to see different numbers without clearing data
+      userNumber = Math.floor(Math.random() * 10000) + 1;
       
       // Update session timestamp
       localSessions.set(sessionId, now);
@@ -92,7 +99,7 @@ export const handler: Handler = async (event) => {
       // Count active sessions
       count = localSessions.size;
       
-      console.log(`📊 Local sessions: ${count} online`);
+      console.log(`📊 Local sessions: ${count} online, User #${userNumber} (random)`);
     } 
     // PRODUCTION MODE - Use Redis
     else {
@@ -112,6 +119,19 @@ export const handler: Handler = async (event) => {
         throw new Error("Redis client not initialized");
       }
 
+      // Check if user already has a number assigned
+      const existingNumber = await redis.hget(USER_NUMBER_KEY, sessionId);
+      
+      if (existingNumber) {
+        // User already registered, use existing number
+        userNumber = parseInt(existingNumber as string);
+      } else {
+        // New user! Assign the next sequential number
+        userNumber = await redis.incr(USER_COUNTER_KEY);
+        // Store the mapping: sessionId -> userNumber
+        await redis.hset(USER_NUMBER_KEY, { [sessionId]: userNumber });
+      }
+
       // Add/update user's timestamp in sorted set
       await redis.zadd(KEY, { score: now, member: sessionId });
       
@@ -125,7 +145,10 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json", ...cors },
-      body: JSON.stringify({ online: count }),
+      body: JSON.stringify({ 
+        online: count,
+        userNumber: userNumber 
+      }),
     };
   } catch (e: any) {
     console.error("Heartbeat error:", e);

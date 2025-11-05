@@ -1,0 +1,41 @@
+{
+  "cats": [
+    {
+      "id": "bongo-cat-1",
+      "name": "Bongo Cat",
+      "path": "/cats/bongo-cat-1/1.png",
+      "animationPath": "/cats/bongo-cat-1/2.png"
+    }
+  ],
+  "hats": [
+    {
+      "id": "none-hat",
+      "name": "No Hat",
+      "path": ""
+    },
+    {
+      "id": "mortarboard",
+      "name": "Graduation Cap",
+      "path": "/hats/mortarboard.png"
+    }
+  ],
+  "tables": [
+    {
+      "id": "table",
+      "name": "Work Table",
+      "path": "/tables/table.png"
+    }
+  ],
+  "others": [
+    {
+      "id": "none-other",
+      "name": "No Accessory",
+      "path": ""
+    },
+    {
+      "id": "resume",
+      "name": "Resume",
+      "path": "/others/resume.png"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import CharacterCreator from '../components/CharacterCreator';
@@ -9,24 +9,8 @@ export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCharacterCreator, setShowCharacterCreator] = useState(false);
-  const [userNumber, setUserNumber] = useState<number | null>(null);
-  const { onlineCount, loading } = useOnlineCount();
+  const { onlineCount, userNumber, loading } = useOnlineCount();
   const { t } = useLanguage();
-
-  // Generate or retrieve a static user number (this would typically come from backend)
-  useEffect(() => {
-    // Check if user already has a number in localStorage
-    const storedNumber = localStorage.getItem('userNumber');
-    if (storedNumber) {
-      setUserNumber(parseInt(storedNumber));
-    } else {
-      // Generate a random number for demo purposes
-      // In production, this should come from your backend when user registers
-      const newNumber = Math.floor(Math.random() * 10000) + 1;
-      localStorage.setItem('userNumber', newNumber.toString());
-      setUserNumber(newNumber);
-    }
-  }, []);
 
   const categories = [
     { key: 'technology', label: t('welcome.field.technology') },

@@ -55,6 +55,7 @@ export const useOnlineCount = (options: UseOnlineCountOptions = {}) => {
   } = options;
 
   const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [userNumber, setUserNumber] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,8 +67,9 @@ export const useOnlineCount = (options: UseOnlineCountOptions = {}) => {
    * Sends a POST request to the heartbeat serverless function with the session ID.
    * The server:
    * 1. Stores/updates the session timestamp in Redis sorted set
-   * 2. Counts all active sessions (active within last 120 seconds)
-   * 3. Returns the current online count
+   * 2. Assigns a sequential user number if this is a new session
+   * 3. Counts all active sessions (active within last 120 seconds)
+   * 4. Returns the current online count and user's assigned number
    * 
    * This single call both registers the user as online AND gets the latest count.
    * The 120-second window (vs 60s heartbeat) prevents false offline detection.
@@ -86,6 +88,9 @@ export const useOnlineCount = (options: UseOnlineCountOptions = {}) => {
 
       const data = await response.json();
       setOnlineCount(data.online); // Update count from response
+      if (data.userNumber) {
+        setUserNumber(data.userNumber); // Set user's sequential number
+      }
       setError(null);
       setLoading(false);
     } catch (err: any) {
@@ -122,5 +127,5 @@ export const useOnlineCount = (options: UseOnlineCountOptions = {}) => {
     };
   }, [enabled, sendHeartbeat, heartbeatInterval]);
 
-  return { onlineCount, loading, error };
+  return { onlineCount, userNumber, loading, error };
 };
