@@ -1,9 +1,12 @@
 import { useLanguage } from '../../context/LanguageContext';
+import { CatCanvasAvatar } from '../lobby';
 import type { Asset } from '../../types/character';
 
 interface CharacterPreviewProps {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   selectedCat: string;
+  selectedHat: string;
+  selectedTable: string;
+  selectedOther: string;
   selectedCatData?: Asset;
   selectedHatData?: Asset;
   selectedTableData?: Asset;
@@ -15,8 +18,10 @@ interface CharacterPreviewProps {
  * Displays the character preview with canvas and selection summary
  */
 export default function CharacterPreview({
-  canvasRef,
   selectedCat,
+  selectedHat,
+  selectedTable,
+  selectedOther,
   selectedCatData,
   selectedHatData,
   selectedTableData,
@@ -35,12 +40,14 @@ export default function CharacterPreview({
         {/* Character Display - Canvas Preview */}
         <div className="bg-white rounded-xl p-4 mb-6 flex items-center justify-center">
           {selectedCat ? (
-            <canvas
-              ref={canvasRef}
-              width={1000}
-              height={1000}
+            <CatCanvasAvatar
+              character={{
+                cat: selectedCat,
+                table: selectedTable,
+                hat: selectedHat,
+                other: selectedOther,
+              }}
               className="max-w-full h-auto rounded-lg"
-              style={{ maxHeight: '400px' }}
             />
           ) : (
             <div className="text-center text-slate-400 py-20">

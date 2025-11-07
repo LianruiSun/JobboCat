@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react';
 
+/**
+ * @deprecated This hook is no longer used. Use CatCanvasAvatar component instead.
+ * The CatCanvasAvatar component provides better performance with image caching
+ * and proper loading states.
+ */
+
 interface UseCharacterPreviewProps {
   selectedCat: string;
   selectedHat: string;
@@ -10,6 +16,8 @@ interface UseCharacterPreviewProps {
 /**
  * Custom hook to manage canvas-based character preview
  * Handles image loading and drawing on canvas
+ * 
+ * @deprecated Use CatCanvasAvatar component from '../components/lobby' instead
  */
 export function useCharacterPreview({
   selectedCat,

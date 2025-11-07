@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '../components/layout';
 import { Button } from '../components/common/ui';
 import { CharacterCreator } from '../components/character';
+import { CatCanvasAvatar } from '../components/lobby';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import { loadProfile, updateProfile, checkUsernameAvailable } from '../lib/profileService';
@@ -146,6 +147,7 @@ export default function ProfilePage() {
           <CharacterCreator
             onComplete={handleCharacterUpdate}
             onBack={() => setIsEditingCharacter(false)}
+            initialCharacter={character}
           />
         </main>
       </div>
@@ -174,9 +176,13 @@ export default function ProfilePage() {
               {character && (
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 mb-4">
                   <div className="aspect-square bg-white rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={character.cat} 
-                      alt="Your cat character" 
+                    <CatCanvasAvatar
+                      character={{
+                        cat: character.cat,
+                        table: character.table,
+                        hat: character.hat,
+                        other: character.other,
+                      }}
                       className="w-full h-full object-contain"
                     />
                   </div>

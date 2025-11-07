@@ -3,7 +3,6 @@ import Button from '../common/ui/Button';
 import CharacterPreview from './CharacterPreview';
 import AssetSelector from './AssetSelector';
 import AssetTabs from './AssetTabs';
-import { useCharacterPreview } from '../../hooks/useCharacterPreview';
 import { useAssetSelection } from '../../hooks/useAssetSelection';
 import assetsData from '../../assets/character-assets.json';
 import type { CharacterAssets, CharacterSelection } from '../../types/character';
@@ -11,12 +10,13 @@ import type { CharacterAssets, CharacterSelection } from '../../types/character'
 interface CharacterCreatorProps {
   onComplete: (character: CharacterSelection) => void;
   onBack: () => void;
+  initialCharacter?: CharacterSelection | null;
 }
 
 /**
  * Character creator component - allows users to customize their cat avatar
  */
-export default function CharacterCreator({ onComplete, onBack }: CharacterCreatorProps) {
+export default function CharacterCreator({ onComplete, onBack, initialCharacter }: CharacterCreatorProps) {
   const { t } = useLanguage();
   const assets = assetsData as CharacterAssets;
 
@@ -33,14 +33,7 @@ export default function CharacterCreator({ onComplete, onBack }: CharacterCreato
     setActiveTab,
     isComplete,
     getSelectedData,
-  } = useAssetSelection(assets);
-
-  const canvasRef = useCharacterPreview({
-    selectedCat,
-    selectedHat,
-    selectedTable,
-    selectedOther,
-  });
+  } = useAssetSelection(assets, { initialCharacter });
 
   const { selectedCatData, selectedHatData, selectedTableData, selectedOtherData } =
     getSelectedData();
@@ -71,8 +64,10 @@ export default function CharacterCreator({ onComplete, onBack }: CharacterCreato
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left Side - Character Preview */}
         <CharacterPreview
-          canvasRef={canvasRef}
           selectedCat={selectedCat}
+          selectedHat={selectedHat}
+          selectedTable={selectedTable}
+          selectedOther={selectedOther}
           selectedCatData={selectedCatData}
           selectedHatData={selectedHatData}
           selectedTableData={selectedTableData}
