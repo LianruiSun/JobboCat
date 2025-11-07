@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import Header from '../components/Header';
-import Button from '../components/Button';
-import Turnstile from '../components/Turnstile';
+import { Header } from '../components/layout';
+import { Button } from '../components/common/ui';
+import { Turnstile } from '../components/auth';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
+import { isProfileComplete } from '../lib/profileService';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -42,12 +43,22 @@ export default function LoginPage() {
         // Handle sign up
         await signUp(email, password, { full_name: fullName });
         setSuccess('Account created! Please check your email to confirm.');
+        // Redirect to profile setup for new users
+        setTimeout(() => navigateTo('profile-setup'), 1000);
       } else {
         // Handle sign in
         await signIn(email, password);
         setSuccess('Signed in successfully!');
-        // Navigate to welcome page after successful login
-        setTimeout(() => navigateTo('welcome'), 1000);
+        
+        // Check if profile is complete
+        const profileComplete = await isProfileComplete();
+        if (profileComplete) {
+          // Navigate to lobby if profile is complete
+          setTimeout(() => navigateTo('lobby'), 1000);
+        } else {
+          // Navigate to profile setup if incomplete
+          setTimeout(() => navigateTo('profile-setup'), 1000);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');

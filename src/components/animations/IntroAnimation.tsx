@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOnlineCount } from '../hooks/useOnlineCount';
+import { useOnlineCount } from '../../hooks/useOnlineCount';
 
 interface IntroAnimationProps {
   onComplete: () => void;

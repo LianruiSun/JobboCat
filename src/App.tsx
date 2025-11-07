@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import LobbyPage from './pages/LobbyPage';
-import MainPage from './pages/MainPage';
 import AboutPage from './pages/AboutPage';
 import FeaturesPage from './pages/FeaturesPage';
-import IntroAnimation from './components/IntroAnimation';
+import ProfileSetupPage from './pages/ProfileSetupPage';
+import ProfilePage from './pages/ProfilePage';
+import { IntroAnimation } from './components/animations';
 import { NavigationProvider } from './context/NavigationContext';
 import { AuthProvider } from './context/AuthContext';
+import { CharacterProvider } from './context/CharacterContext';
+import { useOAuthRedirectHandler } from './hooks/useOAuthRedirectHandler';
 
 // Simple routing - you can replace this with React Router later
-type PageType = 'welcome' | 'login' | 'lobby' | 'main' | 'about' | 'features';
+type PageType = 'welcome' | 'login' | 'lobby' | 'about' | 'features' | 'profile-setup' | 'profile';
 
-function App() {
+// Component that uses both Auth and Navigation contexts
+function AppRouter() {
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
   const [showIntro, setShowIntro] = useState(true);
 
@@ -43,20 +47,23 @@ function App() {
         return <LoginPage />;
       case 'lobby':
         return <LobbyPage />;
-      case 'main':
-        return <MainPage />;
       case 'about':
         return <AboutPage />;
       case 'features':
         return <FeaturesPage />;
+      case 'profile-setup':
+        return <ProfileSetupPage />;
+      case 'profile':
+        return <ProfilePage />;
       default:
         return <WelcomePage />;
     }
   };
 
   return (
-    <AuthProvider>
-      <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
+    <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
+      <OAuthHandler />
+      <CharacterProvider>
         <div className="app">
           {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
           {renderPage()}
@@ -104,16 +111,6 @@ function App() {
           Lobby
         </button>
         <button
-          onClick={() => navigateTo('main')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'main'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Main
-        </button>
-        <button
           onClick={() => navigateTo('about')}
           className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
             currentPage === 'about'
@@ -134,8 +131,23 @@ function App() {
           Features
         </button>
       </div>
-      </div>
+        </div>
+      </CharacterProvider>
     </NavigationProvider>
+  );
+}
+
+// Small component that just handles OAuth redirects
+function OAuthHandler() {
+  useOAuthRedirectHandler();
+  return null;
+}
+
+// Wrapper component that provides AuthProvider
+function App() {
+  return (
+    <AuthProvider>
+      <AppRouter />
     </AuthProvider>
   );
 }

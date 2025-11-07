@@ -1,16 +1,39 @@
-import { useState } from 'react';
-import Header from '../components/Header';
-import Button from '../components/Button';
-import CharacterCreator from '../components/CharacterCreator';
+import { useState, useEffect } from 'react';
+import { Header } from '../components/layout';
+import { Button } from '../components/common/ui';
 import { useOnlineCount } from '../hooks/useOnlineCount';
 import { useLanguage } from '../context/LanguageContext';
+import { useCharacter } from '../context/CharacterContext';
+import { useNavigation } from '../context/NavigationContext';
+import { useAuth } from '../context/AuthContext';
+import { loadProfile } from '../lib/profileService';
 
 export default function WelcomePage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showCharacterCreator, setShowCharacterCreator] = useState(false);
   const { onlineCount, userNumber, loading } = useOnlineCount();
   const { t } = useLanguage();
+  const { setCharacter } = useCharacter();
+  const { navigateTo } = useNavigation();
+  const { user } = useAuth();
+
+  // Load user's profile character if logged in (but don't redirect)
+  useEffect(() => {
+    const loadUserCharacter = async () => {
+      if (user) {
+        try {
+          const profile = await loadProfile();
+          if (profile.cat_config) {
+            setCharacter(profile.cat_config);
+          }
+        } catch (error) {
+          console.error('Failed to load profile:', error);
+        }
+      }
+    };
+
+    loadUserCharacter();
+  }, [user, setCharacter]);
 
   const categories = [
     { key: 'technology', label: t('welcome.field.technology') },
@@ -22,18 +45,14 @@ export default function WelcomePage() {
   ];
 
   const handleJoinClick = () => {
-    setShowCharacterCreator(true);
-  };
-
-  const handleCharacterComplete = (character: { cat: string; hat: string; table: string; other: string }) => {
-    console.log('Character created:', character);
-    console.log('Selected field:', selectedCategory);
-    // TODO: Navigate to lobby or save character data
-    alert(`Welcome! Your character is ready!\nCat: ${character.cat}\nTable: ${character.table}\nHat: ${character.hat || 'None'}\nAccessory: ${character.other || 'None'}`);
-  };
-
-  const handleBack = () => {
-    setShowCharacterCreator(false);
+    // Check if user is logged in
+    if (user) {
+      // User is logged in, go to lobby
+      navigateTo('lobby');
+    } else {
+      // User is not logged in, go to login page
+      navigateTo('login');
+    }
   };
 
   return (
@@ -45,9 +64,8 @@ export default function WelcomePage() {
       <div className="absolute top-1/4 left-10 h-96 w-96 rounded-full bg-emerald-200/20 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-10 h-96 w-96 rounded-full bg-teal-200/20 blur-3xl pointer-events-none" />
 
-      {/* Main Content - Conditional Rendering */}
-      {!showCharacterCreator ? (
-        <div className="relative z-10 max-w-2xl mx-auto text-center animate-fade-in">
+      {/* Main Content */}
+      <div className="relative z-10 max-w-2xl mx-auto text-center animate-fade-in">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -152,14 +170,6 @@ export default function WelcomePage() {
           </Button>
         </div>
       </div>
-      ) : (
-        <div className="relative z-10 w-full px-4">
-          <CharacterCreator
-            onComplete={handleCharacterComplete}
-            onBack={handleBack}
-          />
-        </div>
-      )}
       </div>
     </div>
   );

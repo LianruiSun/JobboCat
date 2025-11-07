@@ -1,7 +1,7 @@
-import { useNavigation } from '../context/NavigationContext';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import LanguageSelector from './LanguageSelector';
+import { useNavigation } from '../../context/NavigationContext';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import LanguageSelector from '../common/ui/LanguageSelector';
 
 export default function Header() {
   const { navigateTo } = useNavigation();
@@ -59,6 +59,18 @@ export default function Header() {
           
           {user ? (
             <>
+              <button
+                onClick={() => navigateTo('lobby')}
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Lobby
+              </button>
+              <button
+                onClick={() => navigateTo('profile')}
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Profile
+              </button>
               <span className="text-sm text-slate-600">
                 {user.email}
               </span>

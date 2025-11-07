@@ -1,182 +1,169 @@
-import Header from '../components/Header';
-import Button from '../components/Button';
+import { useState, useEffect } from 'react';
+import { Header } from '../components/layout';
+import { useOnlineCount } from '../hooks/useOnlineCount';
+import { useLanguage } from '../context/LanguageContext';
+import { useCharacter } from '../context/CharacterContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '../context/NavigationContext';
+import { useCatInteraction } from '../hooks/useCatInteraction';
+import { useFocusSession } from '../hooks/useFocusSession';
+import { loadProfile } from '../lib/profileService';
+import assetsData from '../assets/character-assets.json';
+import { MOCK_STATS, MOCK_OTHERS_FOCUSING, MOCK_PUBLIC_MESSAGES } from '../data/mockLobbyData';
+import {
+  CatCanvasAvatar,
+  OthersFocusingList,
+  PublicMessageStream,
+  LobbyStatsCard,
+  FocusControls,
+} from '../components/lobby';
 
 export default function LobbyPage() {
-  const rooms = [
-    {
-      id: 1,
-      name: 'Tech Professionals',
-      members: 156,
-      online: 42,
-      category: 'Technology',
-      description: 'Connect with software developers, engineers, and tech enthusiasts.',
-    },
-    {
-      id: 2,
-      name: 'Design Studio',
-      members: 89,
-      online: 23,
-      category: 'Design',
-      description: 'Share ideas and collaborate with creative designers.',
-    },
-    {
-      id: 3,
-      name: 'Business Network',
-      members: 203,
-      online: 67,
-      category: 'Business',
-      description: 'Network with entrepreneurs and business professionals.',
-    },
-    {
-      id: 4,
-      name: 'Marketing Hub',
-      members: 134,
-      online: 38,
-      category: 'Marketing',
-      description: 'Discuss strategies and trends in digital marketing.',
-    },
-  ];
+  const [message, setMessage] = useState('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const { onlineCount } = useOnlineCount();
+  const { t } = useLanguage();
+  const { character, setCharacter, getActiveCatPath } = useCharacter();
+  const { user } = useAuth();
+  const { navigateTo } = useNavigation();
+  const { isFocusing, todaySessions, startFocus } = useFocusSession();
+  
+  // Monitor interactions for cat animation
+  useCatInteraction();
+
+  // Load user's profile character on mount
+  useEffect(() => {
+    const loadUserCharacter = async () => {
+      if (!user) {
+        navigateTo('login');
+        return;
+      }
+
+      try {
+        const profile = await loadProfile();
+        if (profile.cat_config) {
+          // Update character context with user's saved character
+          setCharacter(profile.cat_config);
+        } else {
+          // User doesn't have a character yet, redirect to profile setup
+          console.log('User has no character, redirecting to profile setup');
+          navigateTo('profile-setup');
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to load user character:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadUserCharacter();
+  }, [user, setCharacter, navigateTo]);
+
+  // Load user's character or use defaults
+  const userCharacter = character || {
+    cat: assetsData.cats[0]?.path || '',
+    catFolder: assetsData.cats[0]?.path || '',
+    table: assetsData.tables[0]?.path || '',
+    hat: assetsData.hats[1]?.path || '',
+    other: '',
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (message.trim()) {
+      console.log('Sending message:', message);
+      setMessage('');
+    }
+  };
+
+  // Show loading state while fetching profile
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+        <Header />
+        <main className="pt-20 pb-8 px-4">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+              <p className="text-slate-600">{t('lobby.loading') || 'Loading lobby...'}</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       <Header />
 
-      <main className="pt-24 pb-16 px-6">
+      <main className="pt-20 pb-8 px-4">
         <div className="mx-auto max-w-7xl">
-          {/* Page Header */}
-          <div className="mb-12 animate-fade-in">
-            <h1 className="text-5xl font-bold text-slate-900 mb-4">
-              Choose Your Room
-            </h1>
-            <p className="text-xl text-slate-600">
-              Join a community that matches your interests and goals
-            </p>
-          </div>
+          <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
+            
+            {/* Left Sidebar - Lobby Info */}
+            <aside className="hidden lg:block">
+              <LobbyStatsCard
+                totalJobSeekers={MOCK_STATS.totalJobSeekers}
+                sameFieldCount={MOCK_STATS.sameFieldCount}
+                focusingCount={MOCK_STATS.focusingCount}
+                onlineCount={onlineCount}
+              />
+            </aside>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-slide-up">
-            <div className="card p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">582</p>
-                  <p className="text-sm text-slate-600">Total Members</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-100 text-teal-600">
-                  <div className="h-3 w-3 rounded-full bg-teal-600 animate-pulse" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">170</p>
-                  <p className="text-sm text-slate-600">Currently Online</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">1.2k</p>
-                  <p className="text-sm text-slate-600">Messages Today</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Rooms Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {rooms.map((room, index) => (
-              <div
-                key={room.id}
-                className="card p-6 hover:shadow-md transition-all animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">
-                      {room.name}
-                    </h3>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                      {room.category}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                    <span>{room.online} online</span>
-                  </div>
-                </div>
-
-                <p className="text-slate-600 mb-6">{room.description}</p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span>{room.members} members</span>
+            {/* Center - Cat Avatar & Focus Button */}
+            <main className="flex flex-col items-center">
+              <div className="w-full max-w-2xl">
+                {/* Cat Avatar Card */}
+                <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-emerald-200 mb-6">
+                  {/* Cat Display */}
+                  <div className="flex justify-center mb-6">
+                    <div className="relative">
+                      <CatCanvasAvatar
+                        character={{
+                          cat: getActiveCatPath(), // Use active/inactive cat image
+                          table: userCharacter.table,
+                          hat: userCharacter.hat,
+                          other: userCharacter.other,
+                        }}
+                        className="max-w-full h-auto rounded-xl"
+                      />
+                      {isFocusing && (
+                        <div className="absolute inset-0 bg-emerald-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                          <div className="text-center">
+                            <div className="text-6xl mb-4 animate-bounce">🧘</div>
+                            <p className="text-2xl font-bold text-emerald-700">{t('lobby.focus.overlay')}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => console.log(`Joining room: ${room.name}`)}
-                  >
-                    Join Room
-                  </Button>
+                  <FocusControls
+                    isFocusing={isFocusing}
+                    onStartFocus={startFocus}
+                    catDialogue={t('lobby.cat.dialogue')}
+                    todaySessions={todaySessions}
+                    dailyGoal={MOCK_STATS.dailyGoal}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
+            </main>
 
-          {/* Create Room Button */}
-          <div className="mt-12 text-center">
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => console.log('Creating new room')}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M12 4v16m8-8H4" />
-              </svg>
-              Create New Room
-            </Button>
+            {/* Right Sidebar - Others' Cats + Public Message Stream */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-24 flex flex-col gap-4" style={{ maxHeight: 'calc(100vh - 7rem)' }}>
+                <OthersFocusingList users={MOCK_OTHERS_FOCUSING} />
+                <PublicMessageStream
+                  messages={MOCK_PUBLIC_MESSAGES}
+                  messageInput={message}
+                  onMessageChange={(e) => setMessage(e.target.value)}
+                  onSubmit={handleSendMessage}
+                />
+              </div>
+            </aside>
+
           </div>
         </div>
       </main>

@@ -61,10 +61,19 @@ export const authService = {
       await supabase.auth.signOut();
     }
 
+    // Get the current origin (will be localhost in dev, production domain in prod)
+    const redirectUrl = window.location.origin;
+    
+    console.log('OAuth redirect URL:', redirectUrl);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
 

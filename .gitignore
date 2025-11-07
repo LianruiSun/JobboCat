@@ -17,6 +17,9 @@ dist-ssr
 .env.local
 .env.production
 
+# Internal documentation (for team members only)
+docs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

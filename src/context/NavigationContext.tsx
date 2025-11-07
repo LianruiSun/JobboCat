@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
-type PageType = 'welcome' | 'login' | 'lobby' | 'main' | 'about' | 'features';
+type PageType = 'welcome' | 'login' | 'lobby' | 'about' | 'features' | 'profile-setup' | 'profile';
 
 interface NavigationContextType {
   currentPage: PageType;

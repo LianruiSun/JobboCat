@@ -1,0 +1,40 @@
+﻿// Korean translations  
+// Note: For full translations, copy from src/context/LanguageContext.backup.tsx lines 387-511
+const ko = {
+  'header.title': 'JobboCat',
+  'header.features': '기능',
+  'header.about': '소개',
+  'header.login': '로그인',
+  'welcome.title': '당신은 혼자가 아닙니다',
+  'welcome.subtitle': '같은 여정을 하는 사람들이 얼마나 되는지 확인하세요.',
+  'welcome.button.join': '커뮤니티 가입',
+  'character.title': '고양이 캐릭터 만들기',
+  'features.title': '강력한 기능',
+  'about.title': 'Jobbo Cat 소개',
+  'about.subtitle': '커뮤니티 주도 플랫폼으로 구직자를 연결하고 의미 있는 전문적 관계를 육성합니다',
+  'about.mission.title': '우리의 사명',
+  'about.mission.p1': '구직은 고립되고 압도적일 수 있습니다. Jobbo Cat은',
+  'about.mission.highlight': '당신은 혼자가 아니다',
+  'about.mission.p2': '라는 믿음을 바탕으로 구축되었습니다.',
+  'about.mission.p3': '우리는 구직자들이 연결하고, 경험을 공유하고, 서로를 지원하며, 의미 있는 전문적 관계를 구축할 수 있는 공간을 만듭니다. 함께, 우리는 구직 여정을 덜 두렵고 더 협력적으로 만듭니다.',
+  'about.creator.title': '창시자 소개',
+  'about.creator.name': 'Darcy (Lianrui) Sun（손련루이）',
+  'about.creator.role': '풀스택 엔지니어 & AI 개발자',
+  'about.creator.bio': 'AI 기반 애플리케이션과 확장 가능한 웹 솔루션 구축에 전문 지식을 갖춘 열정적인 풀스택 엔지니어. 현재 NYU Courant Institute에서 컴퓨터 과학 석사 과정을 밟고 있으며, React, AWS 및 LLM 통합 경험을 보유하고 있습니다. AI 기반 레스토랑 리뷰 SaaS인 Shangping을 설립했으며, 접근성 및 엔터프라이즈 시스템을 위한 혁신적인 솔루션을 개발했습니다.',
+  'about.creator.education': '학력:',
+  'about.creator.education.value': '컴퓨터 과학 석사, NYU Courant Institute (2027년 예정) • 컴퓨터 과학 학사, Worcester Polytechnic Institute (2025년)',
+  'about.creator.skills': '기술:',
+  'about.creator.skills.value': 'React, TypeScript, Python, Node.js, AWS (Lambda, API Gateway, S3), OpenAI API, FastAPI, MongoDB, MySQL',
+  'about.creator.experience': '경력:',
+  'about.creator.experience.value': 'Shangping 풀스택 엔지니어 (AI SaaS) • InnoSpire Technology 풀스택 개발자 • AYCG, Inc 개발 인턴',
+  'about.creator.quote': '"구직의 어려움을 직접 경험했기에, 제가 바랐던 지원 커뮤니티를 만들기 위해 Jobbo Cat을 구축했습니다. 함께 이 여정을 헤쳐나갑시다."',
+  'about.values.community.title': '커뮤니티 우선',
+  'about.values.community.desc': '진정한 연결을 구축하고 서로를 지원합니다',
+  'about.values.transparency.title': '투명성',
+  'about.values.transparency.desc': '개방적이고 정직한 커뮤니케이션과 실시간 가시성',
+  'about.values.empowerment.title': '역량 강화',
+  'about.values.empowerment.desc': '성공을 위한 도구와 지원 제공',
+  // TODO: Add remaining Korean translations from backup file
+};
+
+export default ko;
