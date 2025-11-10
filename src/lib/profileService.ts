@@ -175,3 +175,95 @@ export async function addFocusMinutes(minutes: number): Promise<void> {
 
   console.log(`Added ${minutes} minutes. New total: ${newTotal} minutes`);
 }
+
+/**
+ * Start a focus session
+ */
+export async function startFocusSession(durationMinutes: number): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not logged in');
+
+  const { data, error } = await supabase
+    .from('focus_sessions')
+    .insert({
+      user_id: user.id,
+      duration_minutes: durationMinutes,
+      started_at: new Date().toISOString(),
+      is_active: true,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('Failed to start focus session:', error);
+    throw error;
+  }
+
+  return data.id;
+}
+
+/**
+ * End a focus session
+ */
+export async function endFocusSession(sessionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('focus_sessions')
+    .update({
+      ended_at: new Date().toISOString(),
+      is_active: false,
+    })
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Failed to end focus session:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get the count of currently focusing users
+ */
+export async function getCurrentlyFocusing(): Promise<number> {
+  const { data, error } = await supabase.rpc('get_currently_focusing');
+
+  if (error) {
+    console.error('Failed to get currently focusing count:', error);
+    throw error;
+  }
+
+  return Number(data) || 0;
+}
+
+/**
+ * Check if a focus session is still active
+ */
+export async function isFocusSessionActive(sessionId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('focus_sessions')
+    .select('is_active, started_at, duration_minutes, ended_at')
+    .eq('id', sessionId)
+    .single();
+
+  if (error || !data) {
+    console.error('Failed to check focus session:', error);
+    return false;
+  }
+
+  // Check if session is marked as active in the database
+  if (!data.is_active) {
+    return false;
+  }
+
+  // Check if session has expired based on duration
+  const startedAt = new Date(data.started_at).getTime();
+  const now = Date.now();
+  const durationMs = data.duration_minutes * 60 * 1000;
+  
+  // If ended_at is set, check against that
+  if (data.ended_at) {
+    return now <= new Date(data.ended_at).getTime();
+  }
+  
+  // Otherwise check if it's within the duration window
+  return now < startedAt + durationMs;
+}

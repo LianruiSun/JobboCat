@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '../components/layout';
 import { useOnlineCount } from '../hooks/useOnlineCount';
 import { useTotalUsers } from '../hooks/useTotalUsers';
+import { useCurrentlyFocusing } from '../hooks/useCurrentlyFocusing';
 import { useLanguage } from '../context/LanguageContext';
 import { useCharacter } from '../context/CharacterContext';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,7 @@ export default function LobbyPage() {
   const [totalFocusMinutes, setTotalFocusMinutes] = useState(0);
   const { onlineCount } = useOnlineCount();
   const { totalUsers } = useTotalUsers();
+  const { focusingCount, refetch: refetchFocusingCount } = useCurrentlyFocusing();
   const { t } = useLanguage();
   const { character, setCharacter, getActiveCatPath } = useCharacter();
   const { user } = useAuth();
@@ -35,11 +37,15 @@ export default function LobbyPage() {
   useCatInteraction();
 
   // Wrapper function to update total focus minutes after completing a session
-  const handleStartFocus = (duration: number) => {
-    startFocus(duration);
+  const handleStartFocus = async (duration: number) => {
+    await startFocus(duration);
+    // Refresh the focusing count after starting
+    refetchFocusingCount();
     // Update total focus minutes after session completes
     setTimeout(() => {
       setTotalFocusMinutes(prev => prev + duration);
+      // Refresh focusing count after session completes
+      refetchFocusingCount();
     }, duration * 60 * 1000);
   };
 
@@ -120,7 +126,7 @@ export default function LobbyPage() {
             <aside className="hidden lg:block">
               <LobbyStatsCard
                 totalJobSeekers={totalUsers}
-                focusingCount={MOCK_STATS.focusingCount}
+                focusingCount={focusingCount}
                 onlineCount={onlineCount}
               />
             </aside>
