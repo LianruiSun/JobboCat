@@ -7,6 +7,9 @@ interface StoredSession {
   sessionId: string;
   endTime: number;
   duration: number;
+  isPaused: boolean;
+  pausedAt?: number;
+  accumulatedPausedTime: number; // Total time paused in milliseconds
 }
 
 export function useFocusSession(initialSessions = 3) {
@@ -14,16 +17,33 @@ export function useFocusSession(initialSessions = 3) {
   const [todaySessions, setTodaySessions] = useState(initialSessions);
   const [focusDuration, setFocusDuration] = useState(25); // Default 25 minutes
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const timerRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
   const endTimeRef = useRef<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isRestoringRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const pausedAtRef = useRef<number | null>(null);
+  const accumulatedPausedTimeRef = useRef(0);
 
   // Helper to save session to localStorage
   const saveSessionToStorage = (sessionId: string, endTime: number, duration: number) => {
-    const sessionData: StoredSession = { sessionId, endTime, duration };
+    const sessionData: StoredSession = { 
+      sessionId, 
+      endTime, 
+      duration,
+      isPaused: isPausedRef.current,
+      pausedAt: pausedAtRef.current || undefined,
+      accumulatedPausedTime: accumulatedPausedTimeRef.current
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+  };
+
+  // Helper to update storage with current pause state
+  const updateStorageWithPauseState = () => {
+    const stored = getSessionFromStorage();
+    if (stored && sessionIdRef.current) {
+      saveSessionToStorage(sessionIdRef.current, endTimeRef.current || stored.endTime, stored.duration);
+    }
   };
 
   // Helper to clear session from localStorage
@@ -58,63 +78,85 @@ export function useFocusSession(initialSessions = 3) {
       setIsFocusing(true);
       setRemainingSeconds(duration * 60);
       
-      // Clear any existing timer
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      // Clear any existing interval
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
       
-      // Update countdown every second
-      intervalRef.current = setInterval(() => {
-        if (endTimeRef.current) {
-          const remaining = Math.max(0, Math.floor((endTimeRef.current - Date.now()) / 1000));
-          setRemainingSeconds(remaining);
-        }
-      }, 1000);
-      
-      // Start timer
-      timerRef.current = setTimeout(async () => {
-        setIsFocusing(false);
-        setTodaySessions(prev => prev + 1);
-        setRemainingSeconds(0);
+      // Update countdown every second and check for completion
+      intervalRef.current = setInterval(async () => {
+        if (!endTimeRef.current) return;
         
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
+        if (isPausedRef.current) {
+          // Don't update countdown when paused
+          return;
         }
         
-        // Clear from localStorage
-        clearSessionFromStorage();
+        const adjustedEndTime = endTimeRef.current + accumulatedPausedTimeRef.current;
+        const remaining = Math.max(0, Math.floor((adjustedEndTime - Date.now()) / 1000));
+        setRemainingSeconds(remaining);
         
-        // End the focus session and save focus time to database
-        try {
-          if (sessionIdRef.current) {
-            await endFocusSession(sessionIdRef.current);
-            sessionIdRef.current = null;
+        // Check if session is complete
+        if (remaining === 0) {
+          setIsFocusing(false);
+          setTodaySessions(prev => prev + 1);
+          
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
           }
-          await addFocusMinutes(duration);
-          alert(`🎉 Completed ${duration} minute focus session!`);
-        } catch (error) {
-          console.error('Failed to save focus session:', error);
-          alert(`✅ Completed ${duration} minute focus session! (Failed to save to server)`);
+          
+          // Clear from localStorage
+          clearSessionFromStorage();
+          
+          // End the focus session and save focus time to database
+          try {
+            if (sessionIdRef.current) {
+              await endFocusSession(sessionIdRef.current);
+              sessionIdRef.current = null;
+            }
+            await addFocusMinutes(duration);
+            alert(`🎉 Completed ${duration} minute focus session!`);
+          } catch (error) {
+            console.error('Failed to save focus session:', error);
+            alert(`✅ Completed ${duration} minute focus session! (Failed to save to server)`);
+          }
+          
+          endTimeRef.current = null;
+          accumulatedPausedTimeRef.current = 0;
+          isPausedRef.current = false;
+          pausedAtRef.current = null;
         }
-        
-        timerRef.current = null;
-        endTimeRef.current = null;
-      }, duration * 60 * 1000); // Convert minutes to milliseconds
+      }, 1000)
     } catch (error) {
       console.error('Failed to start focus session:', error);
       alert('Failed to start focus session. Please try again.');
     }
   }, [focusDuration]);
 
+  const pauseFocus = useCallback(() => {
+    if (!isFocusing || isPausedRef.current) return;
+    
+    isPausedRef.current = true;
+    pausedAtRef.current = Date.now();
+    updateStorageWithPauseState();
+    console.log('Focus session paused');
+  }, [isFocusing]);
+
+  const resumeFocus = useCallback(() => {
+    if (!isFocusing || !isPausedRef.current || !pausedAtRef.current) return;
+    
+    // Add the time we were paused to accumulated paused time
+    const pauseDuration = Date.now() - pausedAtRef.current;
+    accumulatedPausedTimeRef.current += pauseDuration;
+    
+    isPausedRef.current = false;
+    pausedAtRef.current = null;
+    updateStorageWithPauseState();
+    console.log(`Focus session resumed (paused for ${Math.floor(pauseDuration / 1000)}s)`);
+  }, [isFocusing]);
+
   const stopFocus = useCallback(async () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -136,7 +178,27 @@ export function useFocusSession(initialSessions = 3) {
     setIsFocusing(false);
     setRemainingSeconds(0);
     endTimeRef.current = null;
+    accumulatedPausedTimeRef.current = 0;
+    isPausedRef.current = false;
+    pausedAtRef.current = null;
   }, []);
+
+  // Handle page visibility changes (pause when tab is hidden)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pauseFocus();
+      } else {
+        resumeFocus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [pauseFocus, resumeFocus]);
 
   // Restore session on mount
   useEffect(() => {
@@ -150,11 +212,22 @@ export function useFocusSession(initialSessions = 3) {
         return;
       }
 
-      const { sessionId, endTime, duration } = stored;
+      const { sessionId, endTime, duration, isPaused, pausedAt, accumulatedPausedTime } = stored;
       const now = Date.now();
 
-      // Check if session has already expired
-      if (now >= endTime) {
+      // Restore pause state
+      accumulatedPausedTimeRef.current = accumulatedPausedTime || 0;
+      
+      // If session was paused when page was closed, add that time to accumulated
+      if (isPaused && pausedAt) {
+        const additionalPausedTime = now - pausedAt;
+        accumulatedPausedTimeRef.current += additionalPausedTime;
+        console.log(`Session was paused, adding ${Math.floor(additionalPausedTime / 1000)}s to paused time`);
+      }
+
+      // Check if session has already expired (accounting for paused time)
+      const adjustedEndTime = endTime + accumulatedPausedTimeRef.current;
+      if (now >= adjustedEndTime) {
         console.log('Stored session has expired, cleaning up...');
         clearSessionFromStorage();
         
@@ -185,51 +258,58 @@ export function useFocusSession(initialSessions = 3) {
         sessionIdRef.current = sessionId;
         endTimeRef.current = endTime;
         
-        const remainingMs = endTime - now;
-        const remainingSecs = Math.floor(remainingMs / 1000);
+        const adjustedEndTime = endTime + accumulatedPausedTimeRef.current;
+        const remainingSecs = Math.max(0, Math.floor((adjustedEndTime - now) / 1000));
         
         setIsFocusing(true);
         setRemainingSeconds(remainingSecs);
         setFocusDuration(duration); // Restore the duration to the UI state
 
-        // Update countdown every second
-        intervalRef.current = setInterval(() => {
-          if (endTimeRef.current) {
-            const remaining = Math.max(0, Math.floor((endTimeRef.current - Date.now()) / 1000));
-            setRemainingSeconds(remaining);
+        // Update countdown every second and check for completion
+        intervalRef.current = setInterval(async () => {
+          if (!endTimeRef.current) return;
+          
+          if (isPausedRef.current) {
+            // Don't update countdown when paused
+            return;
+          }
+          
+          const adjustedEndTime = endTimeRef.current + accumulatedPausedTimeRef.current;
+          const remaining = Math.max(0, Math.floor((adjustedEndTime - Date.now()) / 1000));
+          setRemainingSeconds(remaining);
+          
+          // Check if session is complete
+          if (remaining === 0) {
+            setIsFocusing(false);
+            setTodaySessions(prev => prev + 1);
+            
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            
+            // Clear from localStorage
+            clearSessionFromStorage();
+            
+            // End the focus session and save focus time to database
+            try {
+              if (sessionIdRef.current) {
+                await endFocusSession(sessionIdRef.current);
+                sessionIdRef.current = null;
+              }
+              await addFocusMinutes(duration);
+              alert(`🎉 Completed ${duration} minute focus session!`);
+            } catch (error) {
+              console.error('Failed to save focus session:', error);
+              alert(`✅ Completed ${duration} minute focus session! (Failed to save to server)`);
+            }
+            
+            endTimeRef.current = null;
+            accumulatedPausedTimeRef.current = 0;
+            isPausedRef.current = false;
+            pausedAtRef.current = null;
           }
         }, 1000);
-
-        // Set timer for remaining time
-        timerRef.current = setTimeout(async () => {
-          setIsFocusing(false);
-          setTodaySessions(prev => prev + 1);
-          setRemainingSeconds(0);
-          
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          
-          // Clear from localStorage
-          clearSessionFromStorage();
-          
-          // End the focus session and save focus time to database
-          try {
-            if (sessionIdRef.current) {
-              await endFocusSession(sessionIdRef.current);
-              sessionIdRef.current = null;
-            }
-            await addFocusMinutes(duration);
-            alert(`🎉 Completed ${duration} minute focus session!`);
-          } catch (error) {
-            console.error('Failed to save focus session:', error);
-            alert(`✅ Completed ${duration} minute focus session! (Failed to save to server)`);
-          }
-          
-          timerRef.current = null;
-          endTimeRef.current = null;
-        }, remainingMs);
 
       } catch (error) {
         console.error('Failed to restore session:', error);
@@ -245,7 +325,6 @@ export function useFocusSession(initialSessions = 3) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);

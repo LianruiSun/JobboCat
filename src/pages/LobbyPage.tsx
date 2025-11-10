@@ -31,7 +31,7 @@ export default function LobbyPage() {
   const { character, setCharacter, getActiveCatPath } = useCharacter();
   const { user } = useAuth();
   const { navigateTo } = useNavigation();
-  const { isFocusing, todaySessions, focusDuration, setFocusDuration, startFocus, remainingSeconds } = useFocusSession();
+  const { isFocusing, todaySessions, focusDuration, setFocusDuration, startFocus, stopFocus, remainingSeconds } = useFocusSession();
   
   // Monitor interactions for cat animation
   useCatInteraction();
@@ -155,7 +155,7 @@ export default function LobbyPage() {
                   <FocusControls
                     isFocusing={isFocusing}
                     onStartFocus={handleStartFocus}
-                    catDialogue={t('lobby.cat.dialogue')}
+                    onStopFocus={stopFocus}
                     todaySessions={todaySessions}
                     dailyGoal={MOCK_STATS.dailyGoal}
                     focusDuration={focusDuration}
