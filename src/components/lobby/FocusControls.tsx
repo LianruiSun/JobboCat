@@ -2,15 +2,36 @@ import { useLanguage } from '../../context/LanguageContext';
 
 interface FocusControlsProps {
   isFocusing: boolean;
-  onStartFocus: () => void;
+  onStartFocus: (duration: number) => void;
   catDialogue: string;
   todaySessions: number;
   dailyGoal: number;
+  focusDuration: number;
+  onDurationChange: (duration: number) => void;
+  remainingSeconds: number;
 }
 
-export default function FocusControls({ isFocusing, onStartFocus, catDialogue, todaySessions, dailyGoal }: FocusControlsProps) {
+const FOCUS_DURATIONS = [5, 10, 25, 30, 45, 60];
+
+export default function FocusControls({ 
+  isFocusing, 
+  onStartFocus, 
+  catDialogue, 
+  todaySessions, 
+  dailyGoal,
+  focusDuration,
+  onDurationChange,
+  remainingSeconds
+}: FocusControlsProps) {
   const { t } = useLanguage();
   const progressPercentage = (todaySessions / dailyGoal) * 100;
+  
+  // Format remaining time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  };
   
   return (
     <div>
@@ -21,8 +42,31 @@ export default function FocusControls({ isFocusing, onStartFocus, catDialogue, t
         <p className="text-center text-lg text-slate-700 mt-2">"{catDialogue}"</p>
       </div>
 
+      {/* Focus Duration Selection */}
+      <div className="mb-4">
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Focus Duration
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {FOCUS_DURATIONS.map((duration) => (
+            <button
+              key={duration}
+              onClick={() => onDurationChange(duration)}
+              disabled={isFocusing}
+              className={`py-2 px-3 rounded-lg font-medium text-sm transition-all ${
+                focusDuration === duration
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              } ${isFocusing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+            >
+              {duration} min
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
-        onClick={onStartFocus}
+        onClick={() => onStartFocus(focusDuration)}
         disabled={isFocusing}
         className={`w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-white text-lg font-semibold shadow-lg mb-6 transition-all ${
           isFocusing ? 'bg-emerald-400 opacity-70 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 hover:shadow-xl hover:scale-[1.02]'
@@ -30,7 +74,7 @@ export default function FocusControls({ isFocusing, onStartFocus, catDialogue, t
       >
         <span className="text-2xl">⏰</span>
         <span className="text-xl">
-          {isFocusing ? t('lobby.focus.button.focusing') : t('lobby.focus.button.start')}
+          {isFocusing ? `Focusing... (${formatTime(remainingSeconds)})` : `Start ${focusDuration}-Minute Focus`}
         </span>
       </button>
 

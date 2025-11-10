@@ -4,6 +4,8 @@ const en = {
   'header.features': 'Features',
   'header.about': 'About',
   'header.login': 'Login',
+  'header.lobby': 'Lobby',
+  'header.profile': 'Profile',
   
   // Welcome Page
   'welcome.badge.loading': 'Loading...',

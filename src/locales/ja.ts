@@ -4,6 +4,8 @@ const ja = {
   'header.features': '機能',
   'header.about': '概要',
   'header.login': 'ログイン',
+  'header.lobby': 'ロビー',
+  'header.profile': 'プロフィール',
   
   // Welcome Page
   'welcome.badge.loading': '読み込み中...',

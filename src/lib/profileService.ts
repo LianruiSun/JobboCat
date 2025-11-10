@@ -7,7 +7,7 @@ export interface Profile {
   cat_id: string | null;
   cat_config: any | null;
   bio: string | null;
-  total_online_seconds: number;
+  total_focus_minutes: number;
   created_at: string;
   updated_at: string;
 }
@@ -147,4 +147,31 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
 
   if (error) throw error;
   return data === null;
+}
+
+/**
+ * Add focus minutes to user's total
+ */
+export async function addFocusMinutes(minutes: number): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not logged in');
+
+  // Get current total
+  const profile = await loadProfile();
+  const newTotal = (profile.total_focus_minutes || 0) + minutes;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      total_focus_minutes: newTotal,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error('Failed to update focus minutes:', error);
+    throw error;
+  }
+
+  console.log(`Added ${minutes} minutes. New total: ${newTotal} minutes`);
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import LobbyPage from './pages/LobbyPage';
@@ -11,14 +12,12 @@ import { NavigationProvider } from './context/NavigationContext';
 import { AuthProvider } from './context/AuthContext';
 import { CharacterProvider } from './context/CharacterContext';
 import { useOAuthRedirectHandler } from './hooks/useOAuthRedirectHandler';
-
-// Simple routing - you can replace this with React Router later
-type PageType = 'welcome' | 'login' | 'lobby' | 'about' | 'features' | 'profile-setup' | 'profile';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Component that uses both Auth and Navigation contexts
 function AppRouter() {
-  const [currentPage, setCurrentPage] = useState<PageType>('welcome');
   const [showIntro, setShowIntro] = useState(true);
+  const location = useLocation();
 
   // Check if user has seen the intro before
   useEffect(() => {
@@ -33,104 +32,112 @@ function AppRouter() {
     setShowIntro(false);
   };
 
-  // You can pass this function to child components to navigate
-  const navigateTo = (page: PageType) => {
-    setCurrentPage(page);
-  };
-
-  // Render the appropriate page based on currentPage state
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'welcome':
-        return <WelcomePage />;
-      case 'login':
-        return <LoginPage />;
-      case 'lobby':
-        return <LobbyPage />;
-      case 'about':
-        return <AboutPage />;
-      case 'features':
-        return <FeaturesPage />;
-      case 'profile-setup':
-        return <ProfileSetupPage />;
-      case 'profile':
-        return <ProfilePage />;
-      default:
-        return <WelcomePage />;
-    }
-  };
-
   return (
-    <NavigationProvider currentPage={currentPage} navigateTo={navigateTo}>
+    <NavigationProvider>
       <OAuthHandler />
       <CharacterProvider>
         <div className="app">
           {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
-          {renderPage()}
+          
+          <Routes>
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            
+            {/* Protected Routes - Require Authentication */}
+            <Route
+              path="/lobby"
+              element={
+                <ProtectedRoute>
+                  <LobbyPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile-setup"
+              element={
+                <ProtectedRoute>
+                  <ProfileSetupPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Catch all - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
       
-      {/* Navigation buttons for development/testing */}
-      <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
-        <p className="text-xs font-semibold text-slate-600 mb-2">Dev Navigation:</p>
-        <button
-          onClick={() => {
-            localStorage.removeItem('hasSeenIntro');
-            window.location.reload();
-          }}
-          className="px-3 py-1.5 text-xs rounded-lg transition-colors bg-purple-500 text-white hover:bg-purple-600 mb-2"
-        >
-          Reset Intro
-        </button>
-        <button
-          onClick={() => navigateTo('welcome')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'welcome'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Welcome
-        </button>
-        <button
-          onClick={() => navigateTo('login')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'login'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Login
-        </button>
-        <button
-          onClick={() => navigateTo('lobby')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'lobby'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Lobby
-        </button>
-        <button
-          onClick={() => navigateTo('about')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'about'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          About
-        </button>
-        <button
-          onClick={() => navigateTo('features')}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-            currentPage === 'features'
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Features
-        </button>
-      </div>
+          {/* Navigation buttons for development/testing */}
+          <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
+            <p className="text-xs font-semibold text-slate-600 mb-2">Dev Navigation:</p>
+            <button
+              onClick={() => {
+                localStorage.removeItem('hasSeenIntro');
+                window.location.reload();
+              }}
+              className="px-3 py-1.5 text-xs rounded-lg transition-colors bg-purple-500 text-white hover:bg-purple-600 mb-2"
+            >
+              Reset Intro
+            </button>
+            <a
+              href="/"
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors text-center ${
+                location.pathname === '/'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Welcome
+            </a>
+            <a
+              href="/login"
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors text-center ${
+                location.pathname === '/login'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Login
+            </a>
+            <a
+              href="/lobby"
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors text-center ${
+                location.pathname === '/lobby'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Lobby
+            </a>
+            <a
+              href="/about"
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors text-center ${
+                location.pathname === '/about'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              About
+            </a>
+            <a
+              href="/features"
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors text-center ${
+                location.pathname === '/features'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Features
+            </a>
+          </div>
         </div>
       </CharacterProvider>
     </NavigationProvider>

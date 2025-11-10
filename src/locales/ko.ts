@@ -5,6 +5,8 @@ const ko = {
   'header.features': '기능',
   'header.about': '소개',
   'header.login': '로그인',
+  'header.lobby': '로비',
+  'header.profile': '프로필',
   'welcome.title': '당신은 혼자가 아닙니다',
   'welcome.subtitle': '같은 여정을 하는 사람들이 얼마나 되는지 확인하세요.',
   'welcome.button.join': '커뮤니티 가입',

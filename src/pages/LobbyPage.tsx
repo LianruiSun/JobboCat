@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Header } from '../components/layout';
 import { useOnlineCount } from '../hooks/useOnlineCount';
+import { useTotalUsers } from '../hooks/useTotalUsers';
 import { useLanguage } from '../context/LanguageContext';
 import { useCharacter } from '../context/CharacterContext';
 import { useAuth } from '../context/AuthContext';
@@ -21,15 +22,26 @@ import {
 export default function LobbyPage() {
   const [message, setMessage] = useState('');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [totalFocusMinutes, setTotalFocusMinutes] = useState(0);
   const { onlineCount } = useOnlineCount();
+  const { totalUsers } = useTotalUsers();
   const { t } = useLanguage();
   const { character, setCharacter, getActiveCatPath } = useCharacter();
   const { user } = useAuth();
   const { navigateTo } = useNavigation();
-  const { isFocusing, todaySessions, startFocus } = useFocusSession();
+  const { isFocusing, todaySessions, focusDuration, setFocusDuration, startFocus, remainingSeconds } = useFocusSession();
   
   // Monitor interactions for cat animation
   useCatInteraction();
+
+  // Wrapper function to update total focus minutes after completing a session
+  const handleStartFocus = (duration: number) => {
+    startFocus(duration);
+    // Update total focus minutes after session completes
+    setTimeout(() => {
+      setTotalFocusMinutes(prev => prev + duration);
+    }, duration * 60 * 1000);
+  };
 
   // Load user's profile character on mount
   useEffect(() => {
@@ -44,6 +56,8 @@ export default function LobbyPage() {
         if (profile.cat_config) {
           // Update character context with user's saved character
           setCharacter(profile.cat_config);
+          // Set total focus minutes
+          setTotalFocusMinutes(profile.total_focus_minutes || 0);
         } else {
           // User doesn't have a character yet, redirect to profile setup
           console.log('User has no character, redirecting to profile setup');
@@ -105,8 +119,7 @@ export default function LobbyPage() {
             {/* Left Sidebar - Lobby Info */}
             <aside className="hidden lg:block">
               <LobbyStatsCard
-                totalJobSeekers={MOCK_STATS.totalJobSeekers}
-                sameFieldCount={MOCK_STATS.sameFieldCount}
+                totalJobSeekers={totalUsers}
                 focusingCount={MOCK_STATS.focusingCount}
                 onlineCount={onlineCount}
               />
@@ -129,24 +142,36 @@ export default function LobbyPage() {
                         }}
                         className="max-w-full h-auto rounded-xl"
                       />
-                      {isFocusing && (
-                        <div className="absolute inset-0 bg-emerald-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                          <div className="text-center">
-                            <div className="text-6xl mb-4 animate-bounce">🧘</div>
-                            <p className="text-2xl font-bold text-emerald-700">{t('lobby.focus.overlay')}</p>
-                          </div>
-                        </div>
-                      )}
+
                     </div>
                   </div>
 
                   <FocusControls
                     isFocusing={isFocusing}
-                    onStartFocus={startFocus}
+                    onStartFocus={handleStartFocus}
                     catDialogue={t('lobby.cat.dialogue')}
                     todaySessions={todaySessions}
                     dailyGoal={MOCK_STATS.dailyGoal}
+                    focusDuration={focusDuration}
+                    onDurationChange={setFocusDuration}
+                    remainingSeconds={remainingSeconds}
                   />
+                </div>
+
+                {/* Total Focus Time Card */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 shadow-lg border-2 border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-700 mb-1">Total Focus Time</p>
+                      <p className="text-3xl font-bold text-purple-900">
+                        {totalFocusMinutes} <span className="text-xl">min</span>
+                      </p>
+                      <p className="text-sm text-purple-600 mt-1">
+                        ≈ {Math.floor(totalFocusMinutes / 60)}h {totalFocusMinutes % 60}m
+                      </p>
+                    </div>
+                    <div className="text-5xl">⏱️</div>
+                  </div>
                 </div>
               </div>
             </main>

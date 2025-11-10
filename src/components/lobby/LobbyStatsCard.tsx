@@ -2,12 +2,11 @@ import { useLanguage } from '../../context/LanguageContext';
 
 interface LobbyStatsCardProps {
   totalJobSeekers: number;
-  sameFieldCount: number;
   focusingCount: number;
   onlineCount: number;
 }
 
-export default function LobbyStatsCard({ totalJobSeekers, sameFieldCount, focusingCount, onlineCount }: LobbyStatsCardProps) {
+export default function LobbyStatsCard({ totalJobSeekers, focusingCount, onlineCount }: LobbyStatsCardProps) {
   const { t } = useLanguage();
   
   return (
@@ -24,14 +23,6 @@ export default function LobbyStatsCard({ totalJobSeekers, sameFieldCount, focusi
             <span className="text-lg">👥</span>
           </div>
           <p className="text-3xl font-bold text-emerald-700">{totalJobSeekers.toLocaleString()}</p>
-        </div>
-
-        <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-600">{t('lobby.stats.samefield')}</span>
-            <span className="text-lg">🎯</span>
-          </div>
-          <p className="text-3xl font-bold text-blue-700">{sameFieldCount}</p>
         </div>
 
         <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">

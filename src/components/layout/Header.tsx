@@ -41,54 +41,68 @@ export default function Header() {
         </button>
 
         {/* Navigation */}
-        <nav className="hidden items-center gap-8 md:flex">
-          <button
-            onClick={() => navigateTo('about')}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            {t('header.about')}
-          </button>
-          <button
-            onClick={() => navigateTo('features')}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            {t('header.features')}
-          </button>
-          
-          <LanguageSelector />
-          
-          {user ? (
-            <>
-              <button
-                onClick={() => navigateTo('lobby')}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Lobby
-              </button>
-              <button
-                onClick={() => navigateTo('profile')}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Profile
-              </button>
-              <span className="text-sm text-slate-600">
-                {user.email}
-              </span>
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-rose-500 to-pink-600 rounded-lg hover:shadow-lg transition-all hover:scale-105"
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
+        <nav className="hidden items-center gap-6 md:flex">
+          {/* Main Navigation Links */}
+          <div className="flex items-center gap-6">
             <button
-              onClick={() => navigateTo('login')}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:shadow-lg transition-all hover:scale-105"
+              onClick={() => navigateTo('about')}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
-              {t('header.login')}
+              {t('header.about')}
             </button>
-          )}
+            <button
+              onClick={() => navigateTo('features')}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              {t('header.features')}
+            </button>
+            
+            {user && (
+              <>
+                <button
+                  onClick={() => navigateTo('lobby')}
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  {t('header.lobby')}
+                </button>
+                <button
+                  onClick={() => navigateTo('profile')}
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  {t('header.profile')}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-slate-300"></div>
+          
+          {/* Right Section: Language + Auth */}
+          <div className="flex items-center gap-4">
+            <LanguageSelector />
+            
+            {user ? (
+              <>
+                <span className="text-sm text-slate-600 max-w-[150px] truncate">
+                  {user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-rose-500 to-pink-600 rounded-lg hover:shadow-lg transition-all hover:scale-105"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => navigateTo('login')}
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:shadow-lg transition-all hover:scale-105"
+              >
+                {t('header.login')}
+              </button>
+            )}
+          </div>
         </nav>
 
         {/* Mobile menu - includes auth buttons */}

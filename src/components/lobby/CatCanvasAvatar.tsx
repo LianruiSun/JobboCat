@@ -6,15 +6,23 @@ interface CatCanvasAvatarProps {
   width?: number; // canvas px width (default 1000)
   height?: number; // canvas px height (default 1000)
   className?: string;
+  showLoadingIndicator?: boolean; // show loading spinner while images load
 }
 
-export default function CatCanvasAvatar({ character, width = 1000, height = 1000, className }: CatCanvasAvatarProps) {
+export default function CatCanvasAvatar({ 
+  character, 
+  width = 1000, 
+  height = 1000, 
+  className,
+  showLoadingIndicator = true 
+}: CatCanvasAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
   // Preload all images
   useEffect(() => {
+    setImagesLoaded(false); // Reset loading state when character changes
     const parts = [character.table, character.cat, character.hat, character.other].filter(Boolean) as string[];
     
     let loadedCount = 0;
@@ -76,5 +84,26 @@ export default function CatCanvasAvatar({ character, width = 1000, height = 1000
     });
   }, [character.cat, character.table, character.hat, character.other, width, height, imagesLoaded]);
 
-  return <canvas ref={canvasRef} width={width} height={height} className={className} />;
+  return (
+    <div className="relative">
+      <canvas 
+        ref={canvasRef} 
+        width={width} 
+        height={height} 
+        className={className}
+        style={{ opacity: imagesLoaded ? 1 : 0, transition: 'opacity 0.2s ease-in-out' }}
+      />
+      {!imagesLoaded && showLoadingIndicator && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ aspectRatio: `${width}/${height}` }}
+        >
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-2"></div>
+            <p className="text-sm text-slate-500">Loading cat...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

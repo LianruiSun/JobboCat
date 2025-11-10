@@ -4,6 +4,8 @@ const es = {
   'header.features': 'Características',
   'header.about': 'Acerca de',
   'header.login': 'Iniciar sesión',
+  'header.lobby': 'Vestíbulo',
+  'header.profile': 'Perfil',
   
   // Welcome Page
   'welcome.badge.loading': 'Cargando...',

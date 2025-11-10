@@ -4,6 +4,8 @@ const zhTW = {
   'header.features': '特點',
   'header.about': '關於',
   'header.login': '登入',
+  'header.lobby': '大廳',
+  'header.profile': '個人資料',
   'welcome.badge.loading': '載入中...',
   'welcome.badge.looking': '人正在找工作',
   'welcome.badge.person': '人',
