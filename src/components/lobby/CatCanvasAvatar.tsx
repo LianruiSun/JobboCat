@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import type { CharacterParts } from '../../types/character';
 
 interface CatCanvasAvatarProps {
@@ -9,7 +9,7 @@ interface CatCanvasAvatarProps {
   showLoadingIndicator?: boolean; // show loading spinner while images load
 }
 
-export default function CatCanvasAvatar({ 
+function CatCanvasAvatar({ 
   character, 
   width = 1000, 
   height = 1000, 
@@ -107,3 +107,5 @@ export default function CatCanvasAvatar({
     </div>
   );
 }
+
+export default memo(CatCanvasAvatar);

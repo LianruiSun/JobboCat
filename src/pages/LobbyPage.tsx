@@ -37,10 +37,15 @@ export default function LobbyPage() {
   useCatInteraction();
 
   // Wrapper function to update total focus minutes after completing a session
-  const handleStartFocus = async (duration: number) => {
-    await startFocus(duration);
-    // Refresh the focusing count after starting
-    refetchFocusingCount();
+  const handleStartFocus = (duration: number) => {
+    // Start focus immediately without awaiting
+    startFocus(duration);
+    
+    // Refresh the focusing count after starting (with slight delay for backend update)
+    setTimeout(() => {
+      refetchFocusingCount();
+    }, 100);
+    
     // Update total focus minutes after session completes
     setTimeout(() => {
       setTotalFocusMinutes(prev => prev + duration);

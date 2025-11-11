@@ -178,11 +178,26 @@ export async function addFocusMinutes(minutes: number): Promise<void> {
 
 /**
  * Start a focus session
+ * Ensures only one active session exists per user
  */
 export async function startFocusSession(durationMinutes: number): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not logged in');
 
+  // First, clean up any existing active sessions for this user
+  // This prevents multiple active sessions from latency/double-clicks
+  const { error: cleanupError } = await supabase
+    .from('focus_sessions')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('is_active', true);
+
+  if (cleanupError) {
+    console.warn('Failed to cleanup old sessions:', cleanupError);
+    // Continue anyway - we'll still create the new session
+  }
+
+  // Create the new session
   const { data, error } = await supabase
     .from('focus_sessions')
     .insert({
@@ -199,25 +214,44 @@ export async function startFocusSession(durationMinutes: number): Promise<string
     throw error;
   }
 
+  console.log('Started new focus session:', data.id);
   return data.id;
 }
 
 /**
  * End a focus session
+ * Deletes the session from database to save storage
  */
 export async function endFocusSession(sessionId: string): Promise<void> {
   const { error } = await supabase
     .from('focus_sessions')
-    .update({
-      ended_at: new Date().toISOString(),
-      is_active: false,
-    })
+    .delete()
     .eq('id', sessionId);
 
   if (error) {
-    console.error('Failed to end focus session:', error);
+    console.error('Failed to delete focus session:', error);
     throw error;
   }
+
+  console.log('Deleted completed focus session:', sessionId);
+}
+
+/**
+ * Cancel a focus session (when stopped early)
+ * Deletes the session without adding focus time
+ */
+export async function cancelFocusSession(sessionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('focus_sessions')
+    .delete()
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Failed to cancel focus session:', error);
+    throw error;
+  }
+
+  console.log('Cancelled focus session:', sessionId);
 }
 
 /**
@@ -240,12 +274,12 @@ export async function getCurrentlyFocusing(): Promise<number> {
 export async function isFocusSessionActive(sessionId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('focus_sessions')
-    .select('is_active, started_at, duration_minutes, ended_at')
+    .select('is_active, started_at, duration_minutes')
     .eq('id', sessionId)
     .single();
 
   if (error || !data) {
-    console.error('Failed to check focus session:', error);
+    // Session doesn't exist (might have been deleted)
     return false;
   }
 
@@ -259,11 +293,30 @@ export async function isFocusSessionActive(sessionId: string): Promise<boolean> 
   const now = Date.now();
   const durationMs = data.duration_minutes * 60 * 1000;
   
-  // If ended_at is set, check against that
-  if (data.ended_at) {
-    return now <= new Date(data.ended_at).getTime();
-  }
+  // Check if it's within the duration window (with 5 second buffer for clock drift)
+  return now < startedAt + durationMs + 5000;
+}
+
+/**
+ * Clean up expired focus sessions for the current user
+ * Useful for removing orphaned sessions
+ */
+export async function cleanupExpiredSessions(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Delete sessions older than their duration + 1 hour (safety buffer)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   
-  // Otherwise check if it's within the duration window
-  return now < startedAt + durationMs;
+  const { error } = await supabase
+    .from('focus_sessions')
+    .delete()
+    .eq('user_id', user.id)
+    .lt('started_at', oneHourAgo);
+
+  if (error) {
+    console.warn('Failed to cleanup expired sessions:', error);
+  } else {
+    console.log('Cleaned up expired sessions');
+  }
 }

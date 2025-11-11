@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface FocusControlsProps {
@@ -13,7 +14,7 @@ interface FocusControlsProps {
 
 const FOCUS_DURATIONS = [5, 10, 25, 30, 45, 60];
 
-export default function FocusControls({ 
+function FocusControls({ 
   isFocusing, 
   onStartFocus,
   onStopFocus, 
@@ -46,11 +47,11 @@ export default function FocusControls({
               key={duration}
               onClick={() => onDurationChange(duration)}
               disabled={isFocusing}
-              className={`py-2 px-3 rounded-lg font-medium text-sm transition-all ${
+              className={`py-2 px-3 rounded-lg font-medium text-sm transition-colors ${
                 focusDuration === duration
                   ? 'bg-emerald-500 text-white shadow-md'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              } ${isFocusing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+              } ${isFocusing ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {duration} min
             </button>
@@ -61,7 +62,7 @@ export default function FocusControls({
       {!isFocusing ? (
         <button
           onClick={() => onStartFocus(focusDuration)}
-          className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-white text-lg font-semibold shadow-lg mb-6 transition-all bg-emerald-500 hover:bg-emerald-600 hover:shadow-xl hover:scale-[1.02]"
+          className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-white text-lg font-semibold shadow-lg mb-6 transition-colors bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700"
         >
           <span className="text-2xl">⏰</span>
           <span className="text-xl">Start {focusDuration}-Minute Focus</span>
@@ -111,3 +112,5 @@ export default function FocusControls({
     </div>
   );
 }
+
+export default memo(FocusControls);

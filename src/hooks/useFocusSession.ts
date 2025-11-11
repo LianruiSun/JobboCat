@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { addFocusMinutes, startFocusSession, endFocusSession, isFocusSessionActive } from '../lib/profileService';
+import { addFocusMinutes, startFocusSession, endFocusSession, cancelFocusSession, isFocusSessionActive, cleanupExpiredSessions } from '../lib/profileService';
 
 const STORAGE_KEY = 'jobbocat_focus_session';
 
@@ -65,16 +65,15 @@ export function useFocusSession(initialSessions = 3) {
 
   const startFocus = useCallback(async (duration: number = focusDuration) => {
     try {
-      // Start a focus session in the database
-      const sessionId = await startFocusSession(duration);
-      sessionIdRef.current = sessionId;
-      
+      // Prevent multiple simultaneous starts
+      if (isFocusing) {
+        console.warn('Focus session already in progress');
+        return;
+      }
+
+      // Update UI immediately for instant feedback
       const endTime = Date.now() + duration * 60 * 1000;
       endTimeRef.current = endTime;
-      
-      // Save to localStorage for persistence across page refreshes
-      saveSessionToStorage(sessionId, endTime, duration);
-      
       setIsFocusing(true);
       setRemainingSeconds(duration * 60);
       
@@ -82,6 +81,16 @@ export function useFocusSession(initialSessions = 3) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      
+      // Start database session in background (don't await)
+      startFocusSession(duration).then((sessionId) => {
+        sessionIdRef.current = sessionId;
+        // Save to localStorage for persistence across page refreshes
+        saveSessionToStorage(sessionId, endTime, duration);
+      }).catch((error) => {
+        console.error('Failed to start focus session in database:', error);
+        // Continue with local session even if database fails
+      });
       
       // Update countdown every second and check for completion
       intervalRef.current = setInterval(async () => {
@@ -127,7 +136,7 @@ export function useFocusSession(initialSessions = 3) {
           isPausedRef.current = false;
           pausedAtRef.current = null;
         }
-      }, 1000)
+      }, 1000);
     } catch (error) {
       console.error('Failed to start focus session:', error);
       alert('Failed to start focus session. Please try again.');
@@ -165,13 +174,14 @@ export function useFocusSession(initialSessions = 3) {
     // Clear from localStorage
     clearSessionFromStorage();
     
-    // End the focus session in the database if it exists
+    // Cancel the focus session in the database if it exists (don't save progress)
     if (sessionIdRef.current) {
       try {
-        await endFocusSession(sessionIdRef.current);
+        await cancelFocusSession(sessionIdRef.current);
+        console.log('Focus session cancelled early');
         sessionIdRef.current = null;
       } catch (error) {
-        console.error('Failed to end focus session:', error);
+        console.error('Failed to cancel focus session:', error);
       }
     }
     
@@ -206,6 +216,13 @@ export function useFocusSession(initialSessions = 3) {
       if (isRestoringRef.current) return;
       isRestoringRef.current = true;
 
+      // Clean up any expired sessions first
+      try {
+        await cleanupExpiredSessions();
+      } catch (error) {
+        console.warn('Failed to cleanup expired sessions:', error);
+      }
+
       const stored = getSessionFromStorage();
       if (!stored) {
         isRestoringRef.current = false;
@@ -231,12 +248,14 @@ export function useFocusSession(initialSessions = 3) {
         console.log('Stored session has expired, cleaning up...');
         clearSessionFromStorage();
         
-        // Try to end the session in the database
+        // Try to delete the session and save focus time
         try {
           await endFocusSession(sessionId);
           await addFocusMinutes(duration);
+          console.log('Expired session completed and deleted');
         } catch (error) {
           console.error('Failed to clean up expired session:', error);
+          // Session might already be deleted, continue anyway
         }
         
         isRestoringRef.current = false;
@@ -247,7 +266,7 @@ export function useFocusSession(initialSessions = 3) {
       try {
         const isActive = await isFocusSessionActive(sessionId);
         if (!isActive) {
-          console.log('Session is no longer active in database, cleaning up...');
+          console.log('Session no longer exists in database (already deleted), cleaning up...');
           clearSessionFromStorage();
           isRestoringRef.current = false;
           return;
