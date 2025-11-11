@@ -2,23 +2,32 @@ import { useEffect, useRef } from 'react';
 import { useCharacter } from '../context/CharacterContext';
 
 export function useCatInteraction() {
-  const { setIsActive } = useCharacter();
+  const { isActive, setIsActive } = useCharacter();
   const timerRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number>(0);
 
   useEffect(() => {
     const handleInteraction = () => {
-      // Clear any existing timer to prevent memory leaks
+      // Cancel any pending animation frame
+      animationFrameRef.current += 1;
+      const currentFrame = animationFrameRef.current;
+      
+      // Clear any existing idle timer
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       
-      setIsActive(true);
+      // Toggle the active state immediately for visual feedback
+      const newState = !isActive;
+      setIsActive(newState);
       
-      // Set new timer to return to idle state
+      // Set timer to return to idle state after all clicks stop
       timerRef.current = setTimeout(() => {
-        setIsActive(false);
-        timerRef.current = null;
-      }, 200);
+        if (currentFrame === animationFrameRef.current) {
+          setIsActive(false);
+          timerRef.current = null;
+        }
+      }, 500);
     };
 
     window.addEventListener('click', handleInteraction);
@@ -31,5 +40,5 @@ export function useCatInteraction() {
         clearTimeout(timerRef.current);
       }
     };
-  }, [setIsActive]);
+  }, [isActive, setIsActive]);
 }
